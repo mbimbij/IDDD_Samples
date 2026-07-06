@@ -36,8 +36,6 @@ public class ApplicationContextProvider implements ApplicationContextAware {
 
     @Override
     public synchronized void setApplicationContext(ApplicationContext anApplicationContext) throws BeansException {
-        if (ApplicationContextProvider.applicationContext == null) {
-            ApplicationContextProvider.applicationContext = anApplicationContext;
-        }
+        ApplicationContextProvider.applicationContext = anApplicationContext;
     }
 }

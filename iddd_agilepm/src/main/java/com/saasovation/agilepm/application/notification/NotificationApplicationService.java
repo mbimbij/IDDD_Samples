@@ -22,8 +22,6 @@ public class NotificationApplicationService {
     private NotificationPublisher notificationPublisher;
 
     public NotificationApplicationService(NotificationPublisher aNotificationPublisher) {
-        super();
-
         this.notificationPublisher = aNotificationPublisher;
     }
 

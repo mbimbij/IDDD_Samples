@@ -17,22 +17,23 @@ package com.saasovation.identityaccess.resource;
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.ws.rs.core.Application;
-import javax.ws.rs.core.MultivaluedMap;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.client.WebTarget;
+import jakarta.ws.rs.core.MultivaluedMap;
+import jakarta.ws.rs.core.Application;
+import jakarta.ws.rs.core.Response;
 
-import org.jboss.resteasy.plugins.server.tjws.TJWSEmbeddedJaxrsServer;
+import org.jboss.resteasy.plugins.server.undertow.UndertowJaxrsServer;
 
 import com.saasovation.identityaccess.application.ApplicationServiceTest;
-import com.saasovation.identityaccess.resource.GroupResource;
-import com.saasovation.identityaccess.resource.NotificationResource;
-import com.saasovation.identityaccess.resource.TenantResource;
-import com.saasovation.identityaccess.resource.UserResource;
 
 public abstract class ResourceTestCase extends ApplicationServiceTest {
 
     protected final static int PORT = 8081;
 
-    private TJWSEmbeddedJaxrsServer server;
+    private Client client;
+    private UndertowJaxrsServer server;
 
     protected ResourceTestCase() {
         super();
@@ -55,6 +56,7 @@ public abstract class ResourceTestCase extends ApplicationServiceTest {
     protected void setUp() throws Exception {
         super.setUp();
 
+        this.setClient(ClientBuilder.newClient());
         this.setUpEmbeddedServer();
     }
 
@@ -62,30 +64,49 @@ public abstract class ResourceTestCase extends ApplicationServiceTest {
         this.getServer().stop();
 
         this.setServer(null);
+        this.getClient().close();
+        this.setClient(null);
 
         super.tearDown();
     }
 
+    protected Response get(String aUrl, Object... aTemplatePairs) {
+        WebTarget target = this.getClient().target(aUrl);
+
+        for (int idx = 0; idx < aTemplatePairs.length; idx += 2) {
+            target = target.resolveTemplate(
+                    (String) aTemplatePairs[idx],
+                    aTemplatePairs[idx + 1]);
+        }
+
+        return target.request().get();
+    }
+
     private void setUpEmbeddedServer() {
-        TJWSEmbeddedJaxrsServer server = new TJWSEmbeddedJaxrsServer();
+        UndertowJaxrsServer server = new UndertowJaxrsServer();
 
         server.setPort(PORT);
-        server.getDeployment().setApplication(new ResourceTestCaseApplication());
-        server.getDeployment().getActualResourceClasses().add(GroupResource.class);
-        server.getDeployment().getActualResourceClasses().add(NotificationResource.class);
-        server.getDeployment().getActualResourceClasses().add(TenantResource.class);
-        server.getDeployment().getActualResourceClasses().add(UserResource.class);
+        server.setHostname("localhost");
+        server.deploy(new ResourceTestCaseApplication(), "/");
 
         server.start();
 
         this.setServer(server);
     }
 
-    private TJWSEmbeddedJaxrsServer getServer() {
+    private Client getClient() {
+        return client;
+    }
+
+    private void setClient(Client aClient) {
+        this.client = aClient;
+    }
+
+    private UndertowJaxrsServer getServer() {
         return server;
     }
 
-    private void setServer(TJWSEmbeddedJaxrsServer aServer) {
+    private void setServer(UndertowJaxrsServer aServer) {
         this.server = aServer;
     }
 
@@ -98,6 +119,10 @@ public abstract class ResourceTestCase extends ApplicationServiceTest {
         @Override
         public Set<Class<?>> getClasses() {
             Set<Class<?>> classes = new HashSet<Class<?>>();
+            classes.add(GroupResource.class);
+            classes.add(NotificationResource.class);
+            classes.add(TenantResource.class);
+            classes.add(UserResource.class);
             return classes;
         }
 

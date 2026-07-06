@@ -14,12 +14,14 @@
 
 package com.saasovation.common.notification;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 import com.saasovation.common.AssertionConcern;
 
 public class PublishedNotificationTracker extends AssertionConcern implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private int concurrencyVersion;
@@ -72,13 +74,11 @@ public class PublishedNotificationTracker extends AssertionConcern implements Se
 
     @Override
     public int hashCode() {
-        int hashCodeValue =
-            + (11575 * 241)
-            + (int) this.publishedNotificationTrackerId()
-            + (int) this.mostRecentPublishedNotificationId()
-            + this.typeName().hashCode();
 
-        return hashCodeValue;
+        return + (11575 * 241)
+        + (int) this.publishedNotificationTrackerId()
+        + (int) this.mostRecentPublishedNotificationId()
+        + this.typeName().hashCode();
     }
 
     @Override
@@ -89,6 +89,8 @@ public class PublishedNotificationTracker extends AssertionConcern implements Se
 
     protected PublishedNotificationTracker() {
         super();
+
+        this.setPublishedNotificationTrackerId(-1L);
     }
 
     protected int concurrencyVersion() {

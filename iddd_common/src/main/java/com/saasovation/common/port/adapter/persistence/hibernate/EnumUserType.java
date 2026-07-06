@@ -20,12 +20,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
 
-import org.hibernate.HibernateException;
+import org.hibernate.type.descriptor.WrapperOptions;
 import org.hibernate.usertype.UserType;
 
-public class EnumUserType<E extends Enum<E>> implements UserType {
-
-    private static final int[] SQL_TYPES = { Types.VARCHAR };
+public class EnumUserType<E extends Enum<E>> implements UserType<E> {
 
     private Class<E> clazz = null;
 
@@ -33,20 +31,20 @@ public class EnumUserType<E extends Enum<E>> implements UserType {
         this.clazz = c;
     }
 
-    public int[] sqlTypes() {
-        return SQL_TYPES;
+    public int getSqlType() {
+        return Types.VARCHAR;
     }
 
-    public Class<?> returnedClass() {
+    public Class<E> returnedClass() {
         return clazz;
     }
 
-    public Object nullSafeGet(
+    public E nullSafeGet(
             ResultSet resultSet,
-            String[] names,
-            Object owner)
-    throws HibernateException, SQLException {
-        String name = resultSet.getString(names[0]);
+            int position,
+            WrapperOptions options)
+    throws SQLException {
+        String name = resultSet.getString(position);
         E result = null;
         if (!resultSet.wasNull()) {
             result = Enum.valueOf(clazz, name);
@@ -56,17 +54,18 @@ public class EnumUserType<E extends Enum<E>> implements UserType {
 
     public void nullSafeSet(
             PreparedStatement preparedStatement,
-            Object value,
-            int index)
-    throws HibernateException, SQLException {
+            E value,
+            int index,
+            WrapperOptions options)
+    throws SQLException {
         if (null == value) {
             preparedStatement.setNull(index, Types.VARCHAR);
         } else {
-            preparedStatement.setString(index, ((Enum<?>)value).name());
+            preparedStatement.setString(index, value.name());
         }
     }
 
-    public Object deepCopy(Object value) throws HibernateException{
+    public E deepCopy(E value) {
         return value;
     }
 
@@ -74,21 +73,21 @@ public class EnumUserType<E extends Enum<E>> implements UserType {
         return false;
     }
 
-    public Object assemble(Serializable cached, Object owner) throws HibernateException {
-         return cached;
+    public E assemble(Serializable cached, Object owner) {
+         return this.returnedClass().cast(cached);
     }
 
-    public Serializable disassemble(Object value) throws HibernateException {
+    public Serializable disassemble(E value) {
         return (Serializable)value;
     }
 
-    public Object replace(Object original, Object target, Object owner) throws HibernateException {
+    public E replace(E original, E target, Object owner) {
         return original;
     }
-    public int hashCode(Object x) throws HibernateException {
+    public int hashCode(E x) {
         return x.hashCode();
     }
-    public boolean equals(Object x, Object y) throws HibernateException {
+    public boolean equals(E x, E y) {
         if (x == y)
             return true;
         if (null == x || null == y)

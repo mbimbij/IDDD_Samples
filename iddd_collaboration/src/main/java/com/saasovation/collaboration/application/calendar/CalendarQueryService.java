@@ -21,10 +21,11 @@ import javax.sql.DataSource;
 import com.saasovation.collaboration.application.calendar.data.CalendarData;
 import com.saasovation.common.port.adapter.persistence.AbstractQueryService;
 import com.saasovation.common.port.adapter.persistence.JoinOn;
+import org.springframework.beans.factory.annotation.Qualifier;
 
 public class CalendarQueryService extends AbstractQueryService {
 
-    public CalendarQueryService(DataSource aDataSource) {
+    public CalendarQueryService(@Qualifier("collaborationDataSource") DataSource aDataSource) {
         super(aDataSource);
     }
 

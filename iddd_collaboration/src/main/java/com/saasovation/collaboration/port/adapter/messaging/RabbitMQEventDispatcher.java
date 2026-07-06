@@ -67,7 +67,7 @@ public class RabbitMQEventDispatcher implements EventDispatcher {
     private void initializeMessageProducer() {
         Exchange exchange =
                 Exchange.fanOutInstance(
-                        ConnectionSettings.instance(),
+                        ConnectionSettings.instance("localhost", 5672, "/", "rabbit", "rabbit"),
                         Exchanges.COLLABORATION_EXCHANGE_NAME,
                         true);
 

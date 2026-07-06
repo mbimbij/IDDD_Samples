@@ -14,23 +14,19 @@
 
 package com.saasovation.identityaccess.resource;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Response;
-
-import org.jboss.resteasy.annotations.cache.Cache;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.Response;
 
 import com.saasovation.common.media.OvationsMediaType;
 import com.saasovation.common.serializer.ObjectSerializer;
-import com.saasovation.identityaccess.application.ApplicationServiceRegistry;
-import com.saasovation.identityaccess.application.IdentityApplicationService;
 import com.saasovation.identityaccess.domain.model.identity.Tenant;
 
 @Path("/tenants")
-public class TenantResource {
+public class TenantResource extends AbstractResource {
 
     public TenantResource() {
         super();
@@ -39,7 +35,6 @@ public class TenantResource {
     @GET
     @Path("{tenantId}")
     @Produces({ OvationsMediaType.ID_OVATION_TYPE })
-    @Cache(maxAge=3600)
     public Response getTenant(
             @PathParam("tenantId") String aTenantId) {
 
@@ -51,12 +46,12 @@ public class TenantResource {
 
         String tenantRepresentation = ObjectSerializer.instance().serialize(tenant);
 
-        Response response = Response.ok(tenantRepresentation).build();
+        Response response =
+                Response
+                    .ok(tenantRepresentation)
+                    .cacheControl(this.cacheControlFor(3600))
+                    .build();
 
         return response;
-    }
-
-    private IdentityApplicationService identityApplicationService() {
-        return ApplicationServiceRegistry.identityApplicationService();
     }
 }

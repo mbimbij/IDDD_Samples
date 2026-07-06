@@ -14,6 +14,7 @@
 
 package com.saasovation.common.port.adapter.persistence.eventsourcing.leveldb;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -32,7 +33,11 @@ import com.saasovation.common.event.sourcing.EventStreamId;
 
 public class LevelDBEventSourcingEventStoreTest extends TestCase {
 
-    protected static final String TEST_DATABASE = LevelDBEventSourcingEventStoreTest.class.getResource("/").getPath() + "/data/leveldb/esEventStore";
+    protected static final String TEST_DATABASE =
+            new File(
+                    System.getProperty("java.io.tmpdir"),
+                    "iddd_common_es_leveldb_" + System.nanoTime())
+                .getPath();
 
     private EventStore eventStore;
 

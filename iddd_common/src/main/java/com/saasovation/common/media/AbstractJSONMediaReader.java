@@ -214,10 +214,8 @@ public abstract class AbstractJSONMediaReader {
         }
 
         protected JsonObject deserialize(String aSerialization) {
-            JsonParser parser = new JsonParser();
-
             try {
-                JsonObject object = parser.parse(aSerialization).getAsJsonObject();
+                JsonObject object = JsonParser.parseString(aSerialization).getAsJsonObject();
 
                 return object;
 

@@ -14,7 +14,7 @@
 
 package com.saasovation.identityaccess.resource;
 
-import org.jboss.resteasy.client.ClientRequest;
+import jakarta.ws.rs.core.Response;
 
 import com.saasovation.common.media.RepresentationReader;
 import com.saasovation.identityaccess.domain.model.DomainRegistry;
@@ -33,10 +33,14 @@ public class GroupResourceTest extends ResourceTestCase {
         String url = "http://localhost:" + PORT + "/tenants/{tenantId}/groups/{groupName}";
 
         System.out.println(">>> GET: " + url);
-        ClientRequest request = new ClientRequest(url);
-        request.pathParameter("tenantId", group.tenantId().id());
-        request.pathParameter("groupName", group.name());
-        String output = request.getTarget(String.class);
+        String output;
+        try (Response response =
+                     this.get(
+                             url,
+                             "tenantId", group.tenantId().id(),
+                             "groupName", group.name())) {
+            output = response.readEntity(String.class);
+        }
         System.out.println(output);
 
         RepresentationReader reader = new RepresentationReader(output);

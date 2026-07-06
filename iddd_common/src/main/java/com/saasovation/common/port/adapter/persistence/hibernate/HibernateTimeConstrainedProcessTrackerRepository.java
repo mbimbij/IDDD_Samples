@@ -18,7 +18,7 @@ package com.saasovation.common.port.adapter.persistence.hibernate;
 import java.util.Collection;
 import java.util.Date;
 
-import org.hibernate.Query;
+import org.hibernate.query.Query;
 import org.hibernate.exception.ConstraintViolationException;
 
 import com.saasovation.common.domain.model.process.ProcessId;
@@ -58,11 +58,11 @@ public class HibernateTimeConstrainedProcessTrackerRepository
                     "from TimeConstrainedProcessTracker as tcpt "
                         + "where tcpt.completed = false and"
                         + " tcpt.processInformedOfTimeout = false and"
-                        + " tcpt.timeoutOccursOn <= ?");
+                        + " tcpt.timeoutOccursOn <= ?1");
 
-        query.setParameter(0, (new Date()).getTime());
+        query.setParameter(1, (new Date()).getTime());
 
-        return (Collection<TimeConstrainedProcessTracker>) query.uniqueResult();
+        return (Collection<TimeConstrainedProcessTracker>) query.list();
     }
 
     @Override
@@ -71,15 +71,15 @@ public class HibernateTimeConstrainedProcessTrackerRepository
         Query query =
                 this.session().createQuery(
                     "from TimeConstrainedProcessTracker as tcpt "
-                        + "where tcpt.tenantId = ?"
+                        + "where tcpt.tenantId = ?1 and"
                         + " tcpt.completed = false and"
                         + " tcpt.processInformedOfTimeout = false and"
-                        + " tcpt.timeoutOccursOn <= ?");
+                        + " tcpt.timeoutOccursOn <= ?2");
 
-        query.setParameter(0, aTenantId);
-        query.setParameter(1, (new Date()).getTime());
+        query.setParameter(1, aTenantId);
+        query.setParameter(2, (new Date()).getTime());
 
-        return (Collection<TimeConstrainedProcessTracker>) query.uniqueResult();
+        return (Collection<TimeConstrainedProcessTracker>) query.list();
     }
 
     @Override
@@ -87,17 +87,17 @@ public class HibernateTimeConstrainedProcessTrackerRepository
     public Collection<TimeConstrainedProcessTracker> allTrackers(String aTenantId) {
         Query query =
                 this.session().createQuery(
-                    "from TimeConstrainedProcessTracker as tcpt where tcpt.tenantId = ?");
+                    "from TimeConstrainedProcessTracker as tcpt where tcpt.tenantId = ?1");
 
-        query.setParameter(0, aTenantId);
+        query.setParameter(1, aTenantId);
 
-        return (Collection<TimeConstrainedProcessTracker>) query.uniqueResult();
+        return (Collection<TimeConstrainedProcessTracker>) query.list();
     }
 
     @Override
     public void save(TimeConstrainedProcessTracker aTimeConstrainedProcessTracker) {
         try {
-            this.session().saveOrUpdate(aTimeConstrainedProcessTracker);
+            this.session().merge(aTimeConstrainedProcessTracker);
         } catch (ConstraintViolationException e) {
             throw new IllegalStateException("Either TimeConstrainedProcessTracker is not unique or another constraint has been violated.", e);
         }
@@ -108,10 +108,10 @@ public class HibernateTimeConstrainedProcessTrackerRepository
         Query query =
                 this.session().createQuery(
                     "from TimeConstrainedProcessTracker as tcpt "
-                    + "where tcpt.tenantId = ? and tcpt.processId = ?");
+                    + "where tcpt.tenantId = ?1 and tcpt.processId = ?2");
 
-        query.setParameter(0, aTenantId);
-        query.setParameter(1, aProcessId);
+        query.setParameter(1, aTenantId);
+        query.setParameter(2, aProcessId);
 
         return (TimeConstrainedProcessTracker) query.uniqueResult();
     }

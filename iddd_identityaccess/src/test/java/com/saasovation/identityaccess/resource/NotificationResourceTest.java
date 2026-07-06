@@ -14,8 +14,7 @@
 
 package com.saasovation.identityaccess.resource;
 
-import org.jboss.resteasy.client.ClientRequest;
-import org.jboss.resteasy.client.ClientResponse;
+import jakarta.ws.rs.core.Response;
 
 import com.saasovation.common.domain.model.DomainEventPublisher;
 import com.saasovation.common.media.Link;
@@ -50,9 +49,10 @@ public class NotificationResourceTest extends ResourceTestCase {
 
         String url = "http://localhost:" + PORT + "/notifications";
 
-        ClientRequest request = new ClientRequest(url);
-        ClientResponse<String> response = request.get(String.class);
-        String serializedNotifications = response.getEntity();
+        String serializedNotifications;
+        try (Response response = this.get(url)) {
+            serializedNotifications = response.readEntity(String.class);
+        }
         System.out.println(serializedNotifications);
 
         NotificationLogReader log =
@@ -84,9 +84,10 @@ public class NotificationResourceTest extends ResourceTestCase {
 
         String url = "http://localhost:" + PORT + "/notifications";
 
-        ClientRequest request = new ClientRequest(url);
-        ClientResponse<String> response = request.get(String.class);
-        String serializedNotifications = response.getEntity();
+        String serializedNotifications;
+        try (Response response = this.get(url)) {
+            serializedNotifications = response.readEntity(String.class);
+        }
         System.out.println(serializedNotifications);
 
         NotificationLogReader log =
@@ -138,9 +139,10 @@ public class NotificationResourceTest extends ResourceTestCase {
 
         String url = "http://localhost:" + PORT + "/notifications";
 
-        ClientRequest request = new ClientRequest(url);
-        ClientResponse<String> response = request.get(String.class);
-        String serializedNotifications = response.getEntity();
+        String serializedNotifications;
+        try (Response response = this.get(url)) {
+            serializedNotifications = response.readEntity(String.class);
+        }
         System.out.println(serializedNotifications);
 
         NotificationLogReader log =
@@ -171,9 +173,10 @@ public class NotificationResourceTest extends ResourceTestCase {
 
         String url = "http://localhost:" + PORT + "/notifications";
 
-        ClientRequest request = new ClientRequest(url);
-        ClientResponse<String> response = request.get(String.class);
-        String serializedNotifications = response.getEntity();
+        String serializedNotifications;
+        try (Response response = this.get(url)) {
+            serializedNotifications = response.readEntity(String.class);
+        }
         System.out.println(serializedNotifications);
 
         NotificationLogReader log = new NotificationLogReader(serializedNotifications);
@@ -191,9 +194,9 @@ public class NotificationResourceTest extends ResourceTestCase {
 
             Link previous = log.previous();
 
-            request = new ClientRequest(previous.getHref());
-            response = request.get(String.class);
-            serializedNotifications = response.getEntity();
+            try (Response response = this.get(previous.getHref())) {
+                serializedNotifications = response.readEntity(String.class);
+            }
 
             //System.out.println(serializedNotifications);
 

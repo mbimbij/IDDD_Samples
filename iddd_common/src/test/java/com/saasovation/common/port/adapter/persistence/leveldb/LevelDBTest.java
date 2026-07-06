@@ -14,6 +14,8 @@
 
 package com.saasovation.common.port.adapter.persistence.leveldb;
 
+import java.io.File;
+
 import junit.framework.TestCase;
 
 import org.iq80.leveldb.DB;
@@ -22,7 +24,11 @@ import com.saasovation.common.domain.model.DomainEventPublisher;
 
 public abstract class LevelDBTest extends TestCase {
 
-    protected static final String TEST_DATABASE = LevelDBTest.class.getResource("/").getPath() + "/data/leveldb/iddd_common_test";
+    protected static final String TEST_DATABASE =
+            new File(
+                    System.getProperty("java.io.tmpdir"),
+                    "iddd_common_leveldb_" + System.nanoTime())
+                .getPath();
 
     private DB database;
 

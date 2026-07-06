@@ -68,7 +68,7 @@ public abstract class AbstractQueryService {
         ResultSet result = null;
 
         try {
-            selectStatement = connection.prepareStatement(aQuery);
+            selectStatement = this.prepareScrollableStatement(connection, aQuery);
 
             this.setStatementArguments(selectStatement, anArguments);
 
@@ -100,7 +100,7 @@ public abstract class AbstractQueryService {
         ResultSet result = null;
 
         try {
-            selectStatement = connection.prepareStatement(aQuery);
+            selectStatement = this.prepareScrollableStatement(connection, aQuery);
 
             this.setStatementArguments(selectStatement, anArguments);
 
@@ -156,6 +156,17 @@ public abstract class AbstractQueryService {
                 new ResultSetObjectMapper<T>(aResultSet, aClass, aJoinOn);
 
         return mapper.mapResultToType();
+    }
+
+    private PreparedStatement prepareScrollableStatement(
+            Connection aConnection,
+            String aQuery)
+    throws SQLException {
+
+        return aConnection.prepareStatement(
+                aQuery,
+                ResultSet.TYPE_SCROLL_INSENSITIVE,
+                ResultSet.CONCUR_READ_ONLY);
     }
 
     private void setStatementArguments(

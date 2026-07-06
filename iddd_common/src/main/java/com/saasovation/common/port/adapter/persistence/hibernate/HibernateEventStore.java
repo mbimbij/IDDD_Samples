@@ -16,7 +16,7 @@ package com.saasovation.common.port.adapter.persistence.hibernate;
 
 import java.util.List;
 
-import org.hibernate.Query;
+import org.hibernate.query.Query;
 
 import com.saasovation.common.domain.model.DomainEvent;
 import com.saasovation.common.event.EventSerializer;
@@ -48,11 +48,11 @@ public class HibernateEventStore
         Query query =
                 this.session().createQuery(
                         "from StoredEvent as _obj_ "
-                        + "where _obj_.eventId between ? and ? "
+                        + "where _obj_.eventId between ?1 and ?2 "
                         + "order by _obj_.eventId");
 
-        query.setParameter(0, aLowStoredEventId);
-        query.setParameter(1, aHighStoredEventId);
+        query.setParameter(1, aLowStoredEventId);
+        query.setParameter(2, aHighStoredEventId);
 
         List<StoredEvent> storedEvents = query.list();
 
@@ -65,10 +65,10 @@ public class HibernateEventStore
         Query query =
                 this.session().createQuery(
                         "from StoredEvent as _obj_ "
-                        + "where _obj_.eventId > ? "
+                        + "where _obj_.eventId > ?1 "
                         + "order by _obj_.eventId");
 
-        query.setParameter(0, aStoredEventId);
+        query.setParameter(1, aStoredEventId);
 
         List<StoredEvent> storedEvents = query.list();
 
@@ -86,7 +86,7 @@ public class HibernateEventStore
                         aDomainEvent.occurredOn(),
                         eventSerialization);
 
-        this.session().save(storedEvent);
+        this.session().persist(storedEvent);
 
         return storedEvent;
     }

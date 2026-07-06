@@ -6,19 +6,13 @@
         <property name="hibernate.bytecode.use_reflection_optimizer">false</property>
         <property name="hibernate.connection.driver_class">com.mysql.cj.jdbc.Driver</property>
         <property name="hibernate.connection.password">root</property>
-        <property name="hibernate.connection.url">jdbc:mysql://localhost:3306/iddd_iam</property>
+        <property name="hibernate.connection.url">jdbc:mysql://localhost:3306/iddd_common_test</property>
         <property name="hibernate.connection.username">root</property>
         <property name="hibernate.dialect">org.hibernate.dialect.MySQLDialect</property>
 
-        <mapping resource="Group.hbm.xml" />
-        <mapping resource="GroupMember.hbm.xml" />
-        <mapping resource="Person.hbm.xml" />
         <mapping resource="PublishedNotificationTracker.hbm.xml" />
-        <mapping resource="RegistrationInvitation.hbm.xml" />
-        <mapping resource="Role.hbm.xml" />
         <mapping resource="StoredEvent.hbm.xml" />
-        <mapping resource="Tenant.hbm.xml" />
+        <mapping resource="TestableTimeConstrainedProcess.hbm.xml" />
         <mapping resource="TimeConstrainedProcessTracker.hbm.xml" />
-        <mapping resource="User.hbm.xml" />
     </session-factory>
 </hibernate-configuration>

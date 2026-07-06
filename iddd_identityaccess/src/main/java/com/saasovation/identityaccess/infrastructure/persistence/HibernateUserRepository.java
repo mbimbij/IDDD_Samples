@@ -16,8 +16,7 @@ package com.saasovation.identityaccess.infrastructure.persistence;
 
 import java.util.Collection;
 
-import org.hibernate.Hibernate;
-import org.hibernate.Query;
+import org.hibernate.query.Query;
 import org.hibernate.exception.ConstraintViolationException;
 
 import com.saasovation.common.port.adapter.persistence.hibernate.AbstractHibernateSession;
@@ -36,7 +35,7 @@ public class HibernateUserRepository
     @Override
     public void add(User aUser) {
         try {
-            this.session().saveOrUpdate(aUser);
+            this.session().persist(aUser);
         } catch (ConstraintViolationException e) {
             throw new IllegalStateException("User is not unique.", e);
         }
@@ -55,20 +54,20 @@ public class HibernateUserRepository
 
         Query query = this.session().createQuery(
                 "from com.saasovation.identityaccess.domain.model.identity.User as _obj_ "
-                + "where _obj_.tenantId = ? "
-                +   "and _obj_.person.name.firstName like ? "
-                +   "and _obj_.person.name.lastName like ?");
+                + "where _obj_.tenantId = ?1 "
+                +   "and _obj_.person.name.firstName like ?2 "
+                +   "and _obj_.person.name.lastName like ?3");
 
-        query.setParameter(0, aTenantId);
-        query.setParameter(1, aFirstNamePrefix + "%", Hibernate.STRING);
-        query.setParameter(2, aLastNamePrefix + "%", Hibernate.STRING);
+        query.setParameter(1, aTenantId);
+        query.setParameter(2, aFirstNamePrefix + "%");
+        query.setParameter(3, aLastNamePrefix + "%");
 
         return query.list();
     }
 
     @Override
     public void remove(User aUser) {
-        this.session().delete(aUser);
+        this.session().remove(aUser);
     }
 
     @Override
@@ -79,13 +78,13 @@ public class HibernateUserRepository
 
         Query query = this.session().createQuery(
                 "from com.saasovation.identityaccess.domain.model.identity.User as _obj_ "
-                + "where _obj_.tenantId = ? "
-                  + "and _obj_.username = ? "
-                  + "and _obj_.password = ?");
+                + "where _obj_.tenantId = ?1 "
+                  + "and _obj_.username = ?2 "
+                  + "and _obj_.password = ?3");
 
-        query.setParameter(0, aTenantId);
-        query.setParameter(1, aUsername, Hibernate.STRING);
-        query.setParameter(2, anEncryptedPassword, Hibernate.STRING);
+        query.setParameter(1, aTenantId);
+        query.setParameter(2, aUsername);
+        query.setParameter(3, anEncryptedPassword);
 
         return (User) query.uniqueResult();
     }
@@ -97,11 +96,11 @@ public class HibernateUserRepository
 
         Query query = this.session().createQuery(
                 "from com.saasovation.identityaccess.domain.model.identity.User as _obj_ "
-                + "where _obj_.tenantId = ? "
-                  + "and _obj_.username = ?");
+                + "where _obj_.tenantId = ?1 "
+                  + "and _obj_.username = ?2");
 
-        query.setParameter(0, aTenantId);
-        query.setParameter(1, aUsername, Hibernate.STRING);
+        query.setParameter(1, aTenantId);
+        query.setParameter(2, aUsername);
 
         return (User) query.uniqueResult();
     }

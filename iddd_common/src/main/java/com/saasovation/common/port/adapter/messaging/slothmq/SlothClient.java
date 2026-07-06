@@ -22,6 +22,7 @@ import java.util.Map;
 public class SlothClient extends SlothWorker {
 
 	private static SlothClient instance;
+    private static boolean inProcessDispatch;
 
 	private Map<String,ExchangeListener> exchangeListeners;
 	private Object lock;
@@ -33,6 +34,10 @@ public class SlothClient extends SlothWorker {
 
 		return instance;
 	}
+
+    static synchronized void useInProcessDispatch() {
+        inProcessDispatch = true;
+    }
 
 	public void close() {
 		System.out.println("SLOTH CLIENT: Closing...");
@@ -54,13 +59,19 @@ public class SlothClient extends SlothWorker {
 
 		this.close();
 
-		this.sendToServer("CLOSE:");
+        if (!this.isInProcessDispatch()) {
+            this.sendToServer("CLOSE:");
+        }
 	}
 
 	public void publish(String anExchangeName, String aType, String aMessage) {
 		String encodedMessage = "PUBLISH:" + anExchangeName + "TYPE:" + aType + "MSG:" + aMessage;
 
-        this.sendToServer(encodedMessage);
+        if (this.isInProcessDispatch()) {
+            this.dispatchMessage(encodedMessage);
+        } else {
+            this.sendToServer(encodedMessage);
+        }
 	}
 
 	public void register(ExchangeListener anExchangeListener) {
@@ -68,7 +79,9 @@ public class SlothClient extends SlothWorker {
 			this.exchangeListeners.put(anExchangeListener.name(), anExchangeListener);
 		}
 
-		this.sendToServer("SUBSCRIBE:" + this.port() + ":" + anExchangeListener.exchangeName());
+        if (!this.isInProcessDispatch()) {
+            this.sendToServer("SUBSCRIBE:" + this.port() + ":" + anExchangeListener.exchangeName());
+        }
 	}
 
 	public void unregister(ExchangeListener anExchangeListener) {
@@ -76,7 +89,9 @@ public class SlothClient extends SlothWorker {
 			this.exchangeListeners.remove(anExchangeListener.name());
 		}
 
-		this.sendToServer("UNSUBSCRIBE:" + this.port() + ":" + anExchangeListener.exchangeName());
+        if (!this.isInProcessDispatch()) {
+            this.sendToServer("UNSUBSCRIBE:" + this.port() + ":" + anExchangeListener.exchangeName());
+        }
 	}
 
 	private SlothClient() {
@@ -90,7 +105,9 @@ public class SlothClient extends SlothWorker {
 	}
 
 	private void attach() {
-        this.sendToServer("ATTACH:" + this.port());
+        if (!this.isInProcessDispatch()) {
+            this.sendToServer("ATTACH:" + this.port());
+        }
 	}
 
 	private void dispatchMessage(String anEncodedMessage) {
@@ -145,4 +162,8 @@ public class SlothClient extends SlothWorker {
 
 		receiverThread.start();
 	}
+
+    private boolean isInProcessDispatch() {
+        return inProcessDispatch;
+    }
 }

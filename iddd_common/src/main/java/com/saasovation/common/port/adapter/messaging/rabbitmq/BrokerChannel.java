@@ -15,6 +15,7 @@
 package com.saasovation.common.port.adapter.messaging.rabbitmq;
 
 import java.io.IOException;
+import java.util.concurrent.TimeoutException;
 
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
@@ -90,7 +91,7 @@ public abstract class BrokerChannel {
 
             this.setChannel(this.connection().createChannel());
 
-        } catch (IOException e) {
+        } catch (IOException | TimeoutException e) {
             throw new MessageException("Failed to create/open the queue.", e);
         }
     }

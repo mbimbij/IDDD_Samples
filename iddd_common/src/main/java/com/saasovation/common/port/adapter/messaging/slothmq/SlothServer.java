@@ -24,17 +24,10 @@ import java.util.Map;
  */
 public class SlothServer extends SlothWorker {
 
-	private Map<Integer,ClientRegistration> clientRegistrations;
+	private final Map<Integer,ClientRegistration> clientRegistrations;
 
-	public static void executeInProcessDetachedServer() {
-		Thread serverThread = new Thread() {
-			@Override
-			public void run() {
-				SlothServer.executeNewServer();
-			}
-		};
-
-		serverThread.start();
+	public static synchronized void executeInProcessDetachedServer() {
+        SlothClient.useInProcessDispatch();
 	}
 
 	public static void executeNewServer() {
@@ -43,14 +36,14 @@ public class SlothServer extends SlothWorker {
 		slothServer.execute();
 	}
 
-	public static void main(String anArguments[]) throws Exception {
+	static void main() {
 		SlothServer.executeNewServer();
 	}
 
 	public SlothServer() {
 		super();
 
-		this.clientRegistrations = new HashMap<Integer,ClientRegistration>();
+		this.clientRegistrations = new HashMap<>();
 	}
 
 	public void execute() {

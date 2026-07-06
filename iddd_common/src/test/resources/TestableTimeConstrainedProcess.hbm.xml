@@ -4,7 +4,7 @@
 <hibernate-mapping default-access="field" default-cascade="all">
     <class name="com.saasovation.common.domain.model.process.TestableTimeConstrainedProcess" table="tbl_testable_time_constrained_process" lazy="true">
         <id name="id" type="long" column="id" unsaved-value="-1">
-	        <generator class="native" />
+            <generator class="native" />
         </id>
         <version column="concurrency_version" name="concurrencyVersion" type="int" />
         <property name="allowableDuration" column="allowable_duration" type="long" />

@@ -14,9 +14,9 @@
 
 package com.saasovation.common.domain.model.process;
 
-import javax.persistence.PersistenceException;
+import jakarta.persistence.PersistenceException;
 
-import org.hibernate.Query;
+import org.hibernate.query.Query;
 import org.hibernate.Session;
 
 import com.saasovation.common.port.adapter.persistence.hibernate.AbstractHibernateSession;
@@ -39,9 +39,9 @@ public class TestableTimeConstrainedProcessRepository
     public TestableTimeConstrainedProcess processOfId(ProcessId aProcessId) {
         Query query =
                 this.session().createQuery(
-                    "from TestableTimeConstrainedProcess as ttcp where ttcp.processId = ?");
+                    "from TestableTimeConstrainedProcess as ttcp where ttcp.processId = ?1");
 
-        query.setParameter(0, aProcessId);
+        query.setParameter(1, aProcessId);
 
         return (TestableTimeConstrainedProcess) query.uniqueResult();
     }
