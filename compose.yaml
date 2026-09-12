@@ -1,51 +1,41 @@
+# Infrastructure for the IDDD sample tests: MySQL (read models, Hibernate) and RabbitMQ (notifications).
+# Start with `docker compose up -d --wait` (or `make up`); the tests expect both on localhost with default credentials.
+#
+# MySQL init scripts run ONLY on an empty data directory (first start of a fresh container).
+# Since no volume is declared, `docker compose down` + `up` always gives a clean, fully-initialised database.
 services:
   mysql:
-    image: registry.cn-guangzhou.aliyuncs.com/foenye/mysql:9.7
+    image: mysql:9
+    container_name: iddd-mysql
     ports:
       - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
     volumes:
-      - ./.gradle/volumes/mysql:/bitnami/mysql:rw
+      # Executed in lexical order. test_common.sql creates iddd_common_test; common.sql adds the shared tables to it.
       - ./iddd_common/src/main/mysql/test_common.sql:/docker-entrypoint-initdb.d/01-test_common.sql:ro
       - ./iddd_common/src/main/mysql/common.sql:/docker-entrypoint-initdb.d/02-common.sql:ro
       - ./iddd_identityaccess/src/main/mysql/iam.sql:/docker-entrypoint-initdb.d/03-iam.sql:ro
       - ./iddd_collaboration/src/main/mysql/collaboration.sql:/docker-entrypoint-initdb.d/04-collaboration.sql:ro
-    environment:
-      BITNAMI_DEBUG: true
-      TZ: Asia/Shanghai
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: iddd-mysql
-      MYSQL_ENABLE_SLOW_QUERY: 1
-      MYSQL_LONG_QUERY_TIME: 2
-      MYSQL_EXTRA_FLAGS: >
-        --default-time-zone=+08:00
-        --character-set-server=utf8mb4
-        --collation-server=utf8mb4_general_ci
-        --lower-case-table-names=1
-        --slow-query-log=1
-        --slow-query-log-file=/bitnami/mysql/data/query-slow.log
-        --long-query-time=2
-        --local-infile=1
-        --secure-file-priv=/tmp
-        --innodb-redo-log-capacity=2G
-        --innodb-log-buffer-size=512M
-        --innodb-buffer-pool-size=2G
-  rabbitmq:
-    image: registry.cn-guangzhou.aliyuncs.com/foenye/rabbitmq:4.3
-    environment:
-      RABBITMQ_LOGS: "-"
-      RABBITMQ_USERNAME: rabbit
-      RABBITMQ_PASSWORD: rabbit
-      RABBITMQ_MANAGEMENT_ALLOW_WEB_ACCESS: "true"
-      RABBITMQ_PLUGINS: rabbitmq_management rabbitmq_consistent_hash_exchange rabbitmq_stream rabbitmq_stream_management
-      RABBITMQ_NODE_DEFAULT_QUEUE_TYPE: quorum
-    ports:
-      - '15672:15672'
-      - '5672:5672'
-    volumes:
-      - './.gradle/volumes/rabbitmqstats_data:/bitnami/rabbitmq/mnesia'
     healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "ping"]
-      interval: 5s
+      # The entrypoint runs the init scripts against a temporary --skip-networking server, so a TCP ping
+      # only succeeds once the real server is listening, i.e. after all four scripts have been applied.
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-proot", "--silent"]
+      interval: 3s
       timeout: 5s
-      retries: 60
+      retries: 40
+      start_period: 10s
+
+  rabbitmq:
+    image: rabbitmq:4-management
+    container_name: iddd-rabbitmq
+    ports:
+      - "5672:5672"   # AMQP — the code connects with the broker defaults (guest/guest, vhost "/")
+      - "15672:15672" # management UI — http://localhost:15672 (guest/guest)
+    healthcheck:
+      # check_port_connectivity fails until every listener (incl. AMQP 5672) accepts connections; ping does not.
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "check_port_connectivity"]
+      interval: 3s
+      timeout: 10s
+      retries: 40
       start_period: 10s
