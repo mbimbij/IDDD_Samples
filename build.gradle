@@ -1,14 +1,12 @@
-allprojects {
-    apply plugin: 'java-library'
-}
-
 subprojects {
+    apply plugin: 'java-library'
+
     repositories {
         mavenLocal()
         mavenCentral()
 
         // JBoss Repo
-        maven { url 'https://repository.jboss.org/nexus/content/groups/public-jboss/' }
+        maven { url = 'https://repository.jboss.org/nexus/content/groups/public-jboss/' }
     }
 
     dependencies {
@@ -17,6 +15,17 @@ subprojects {
 
         api "org.slf4j:slf4j-api"
         testImplementation "junit:junit"
+    }
+
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(25)
+        }
+    }
+
+    test {
+        // The samples are JUnit 4 (junit.framework.TestCase); they need the containers from compose.yaml.
+        useJUnit()
     }
 }
 
