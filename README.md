@@ -59,43 +59,86 @@ Usage
 Requires
 --------
 
-- Java 7 (8+ does not work)
-- MySQL Client + Server
-- RabbitMQ
+- Java 25 (the Gradle toolchain is pinned to 25; `make` finds it via `/usr/libexec/java_home -v 25`)
+- Docker (with the `docker compose` plugin) for MySQL and RabbitMQ
 
 Setup (with Docker)
 -------------------
 
-To make it easy to run the tests and it requirements,
-the `startContainers.sh` script is provided. Which
-will start a:
-- MySQL Server container
-- RabbitMQ Server container
-- RabbitMQ Management container
+```
+make up          # = docker compose up -d --wait
+```
 
-If the `mysql` command is available, which is the mysql client,
-also the required SQL scripts will be imported into the MySQL
-Server.
+`compose.yaml` starts two containers; `--wait` blocks until both report healthy:
 
-If you use the `startContainers.sh` script, you don't need
-MySQL Server and RabbitMQ installed locally. Instead,
-Docker needs to be installed as the script will start
-MySQL and RabbitMQ in Docker containers.
+- `iddd-mysql` — `mysql:9` on `localhost:3306`, root password `root`. The four SQL scripts
+  (`test_common.sql`, `common.sql`, `iam.sql`, `collaboration.sql`) are mounted into
+  `/docker-entrypoint-initdb.d/` and run on the first start, creating `iddd_common_test`,
+  `iddd_iam` and `iddd_collaboration`.
+- `iddd-rabbitmq` — `rabbitmq:4-management` on `localhost:5672`; management UI on
+  http://localhost:15672 (guest/guest). The code connects with the broker defaults.
+
+`make down` removes the containers. No volumes are declared, so the next `make up` starts
+from an empty data directory and re-runs the init scripts — that is the intended way to
+reset the databases.
 
 Build
 ------
 
-You can build the project by running:
-
 ```
-./gradlew build
+./gradlew build      # or: make build   (make test = ./gradlew test --continue)
 ```
 
-This automatically downloads Gradle and builds the project, including running the tests.
+This downloads Gradle 9.6 via the wrapper and builds all four projects, including running
+the tests, which need the two containers above (they connect to `localhost` with the
+default credentials; the identityaccess resource tests additionally bind an embedded
+Undertow to port 8081).
 
 The Gradle build using Maven repositories was provided by
 Michael Andrews (Github michaelajr and Twitter @MichaelAJr).
 Thanks much!
+
+Modernization notes (2026)
+==========================
+
+The samples were written for Java 7 and did not build on anything newer. This tree is based
+on the `foenye/IDDD_Samples` fork, whose commit
+"refactor(build): upgrade gradle 9.6.0 + java25 + spring boot 4.1.0 dependencies" did the
+bulk of the upgrade; the commits on top of it fix the remaining test failures, replace the
+infra scripts with docker compose and tidy the build. What changed versus upstream:
+
+- Java 7 → Java 25 (Gradle toolchain), Gradle 2.3 → 9.6.0 (wrapper), `compile` → `api`/`implementation`.
+- Dependency versions come from the Spring Boot 4.1.0 BOM (`spring-boot-dependencies`) —
+  only the BOM is used, not Spring Boot itself: the contexts are still plain
+  `ClassPathXmlApplicationContext` + XML bean definitions.
+- Spring 2.5.6 → Spring Framework 7.0 (un-versioned XSD locations; the `autowire="byName"`
+  attributes on the in-memory test repositories, which take no constructor args, were dropped).
+- Hibernate 3.2.7 → Hibernate ORM 7.4; the `*.hbm.xml` mappings are still used as-is.
+- javax.* → jakarta.* (`ws.rs`, `persistence`, `transaction`, `servlet`); only JDK `javax.sql` remains.
+- RESTEasy 2.0.1 + TJWS → RESTEasy 7.0.2 + embedded Undertow (`UndertowJaxrsServer`) for the
+  identityaccess resource tests; the JAX-RS client tests use the standard `jakarta.ws.rs.client` API.
+- LevelDB (dain/leveldb, pure Java) 0.5 → 0.12. It, and the Guava 21 it pulls in, still use
+  `sun.misc.Unsafe`, so Java 25 prints `sun.misc.Unsafe::invokeCleaner` /
+  `sun.misc.Unsafe::objectFieldOffset ... will be removed in a future release` warnings during
+  the agilepm and collaboration tests — harmless today, but a future JDK will break it unless
+  the library is replaced.
+- amqp-client 3.0.4 → 5.x; connection settings are the broker defaults (`guest`/`guest`, vhost `/`)
+  as in upstream — the fork briefly hard-coded `rabbit`/`rabbit` for a Bitnami image, which is reverted.
+- MySQL Connector/J 5.1 → `com.mysql:mysql-connector-j` 9.x against a MySQL 9 server;
+  commons-dbcp 1.4 → commons-dbcp2.
+- `DomainRegistry`, `ApplicationServiceRegistry` and `ApplicationContextProvider` no longer
+  guard `if (applicationContext == null)`: each test builds a fresh context and the static must
+  follow it, otherwise later tests resolve beans from an already-closed context.
+- `startContainers.sh` and the `db_setup.sh`/`.bat` scripts are gone; `compose.yaml` + `Makefile`
+  replace them.
+- Tests are still JUnit 4 (`junit.framework.TestCase`), run with Gradle's `useJUnit()`.
+
+Things to know:
+
+- `mavenLocal()` is still first in the repository list (upstream's choice); a stale `~/.m2` can
+  shadow Maven Central.
+- The tests are integration tests against the real containers and share the databases, so run
+  one Gradle invocation at a time.
 
 
 I hope you benefit from the samples.
