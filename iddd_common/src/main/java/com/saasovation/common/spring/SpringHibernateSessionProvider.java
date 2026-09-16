@@ -18,8 +18,8 @@ import java.sql.Connection;
 
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
-import org.hibernate.connection.ConnectionProvider;
-import org.hibernate.engine.SessionFactoryImplementor;
+import org.hibernate.engine.jdbc.connections.spi.ConnectionProvider;
+import org.hibernate.engine.spi.SessionFactoryImplementor;
 
 public class SpringHibernateSessionProvider {
 
@@ -38,7 +38,8 @@ public class SpringHibernateSessionProvider {
             SessionFactoryImplementor sfi =
                    (SessionFactoryImplementor) this.sessionFactory;
 
-            ConnectionProvider connectionProvider = sfi.getConnectionProvider();
+            ConnectionProvider connectionProvider =
+                    sfi.getServiceRegistry().getService(ConnectionProvider.class);
 
             connection = connectionProvider.getConnection();
 

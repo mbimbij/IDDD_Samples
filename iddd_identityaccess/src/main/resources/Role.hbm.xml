@@ -8,7 +8,7 @@
         </id>
         <version column="concurrency_version" name="concurrencyVersion" type="int" />
         <property name="description" column="description" type="java.lang.String" />
-        <many-to-one name="group" class="com.saasovation.identityaccess.domain.model.identity.Group" column="group_id" />
+        <many-to-one name="group" class="com.saasovation.identityaccess.domain.model.identity.Group" column="group_id" cascade="all" />
         <property name="name" column="name" type="java.lang.String" />
         <property name="supportsNesting" column="supports_nesting" type="boolean" />
         <component name="tenantId" class="com.saasovation.identityaccess.domain.model.identity.TenantId">

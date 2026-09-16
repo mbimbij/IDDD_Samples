@@ -7,36 +7,33 @@
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="
         http://www.springframework.org/schema/beans
-        http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+        http://www.springframework.org/schema/beans/spring-beans.xsd
         http://www.springframework.org/schema/context
-        http://www.springframework.org/schema/context/spring-context-2.5.xsd
-        http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-2.5.xsd
-        http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-2.0.xsd">
+        http://www.springframework.org/schema/context/spring-context.xsd
+        http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd
+        http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd">
 
     <aop:aspectj-autoproxy/>
 
 	<context:annotation-config />
 
-    <tx:annotation-driven transaction-manager="transactionManager"/>
+    <tx:annotation-driven/>
 
-    <bean id="sessionFactory" class="org.springframework.orm.hibernate3.LocalSessionFactoryBean">
-        <property name="configLocation">
-            <value>classpath:hibernate.cfg.xml</value>
-        </property>
+    <bean id="sessionFactory" class="org.springframework.orm.jpa.hibernate.LocalSessionFactoryBean">
+        <property name="configLocation" value="classpath:hibernate.cfg.xml"/>
     </bean>
 
-    <bean id="sessionProvider" class="com.saasovation.common.spring.SpringHibernateSessionProvider" autowire="byName" />
+    <bean id="sessionProvider" class="com.saasovation.common.spring.SpringHibernateSessionProvider">
+        <property name="sessionFactory" ref="sessionFactory"/>
+    </bean>
 
-    <bean id="transactionManager" class="org.springframework.orm.hibernate3.HibernateTransactionManager">
-        <property name="sessionFactory">
-            <ref bean="sessionFactory"/>
-        </property>
+    <bean id="transactionManager" class="org.springframework.orm.jpa.hibernate.HibernateTransactionManager">
+        <property name="sessionFactory" ref="sessionFactory"/>
+        <property name="autodetectDataSource" value="false"/>
     </bean>
 
     <bean id="abstractTransactionalServiceProxy" abstract="true" class="org.springframework.transaction.interceptor.TransactionProxyFactoryBean">
-        <property name="transactionManager">
-            <ref bean="transactionManager"/>
-        </property>
+        <property name="transactionManager" ref="transactionManager"/>
         <property name="transactionAttributes">
             <props>
                 <prop key="*">PROPAGATION_REQUIRED</prop>
@@ -44,10 +41,12 @@
         </property>
     </bean>
 
-    <bean id="eventStore" class="com.saasovation.common.port.adapter.persistence.hibernate.HibernateEventStore" autowire="byName" />
+    <bean id="eventStore" class="com.saasovation.common.port.adapter.persistence.hibernate.HibernateEventStore">
+        <property name="sessionProvider" ref="sessionProvider"/>
+    </bean>
 
-	<bean id="eventStoreDataSource" destroy-method="close" 	class="org.apache.commons.dbcp.BasicDataSource">
-	    <property name="driverClassName" value="com.mysql.jdbc.Driver" />
+	<bean id="eventStoreDataSource" destroy-method="close" 	class="org.apache.commons.dbcp2.BasicDataSource">
+	    <property name="driverClassName" value="com.mysql.cj.jdbc.Driver" />
 	    <property name="url" value="jdbc:mysql://localhost:3306/iddd_common_test" />
 	    <property name="username" value="root" />
 	    <property name="password" value="root" />
@@ -55,13 +54,15 @@
 	    <property name="defaultAutoCommit" value="false" />
 	</bean>
 
-	<bean id="mysqlJdbcEventStore" class="com.saasovation.common.port.adapter.persistence.eventsourcing.mysql.MySQLJDBCEventStore" autowire="byName">
+	<bean id="mysqlJdbcEventStore" class="com.saasovation.common.port.adapter.persistence.eventsourcing.mysql.MySQLJDBCEventStore">
 		<constructor-arg ref="eventStoreDataSource" />
 	</bean>
 
-    <bean id="publishedNotificationTrackerStore" class="com.saasovation.common.port.adapter.persistence.hibernate.HibernatePublishedNotificationTrackerStore" autowire="byName" />
+    <bean id="publishedNotificationTrackerStore" class="com.saasovation.common.port.adapter.persistence.hibernate.HibernatePublishedNotificationTrackerStore">
+        <property name="sessionProvider" ref="sessionProvider"/>
+    </bean>
 
-    <bean id="timeConstrainedProcessTrackerRepository" class="com.saasovation.common.port.adapter.persistence.hibernate.HibernateTimeConstrainedProcessTrackerRepository" autowire="byName" />
-
-    <bean id="testableTimeConstrainedProcessRepository" class="com.saasovation.common.domain.model.process.TestableTimeConstrainedProcessRepository" autowire="byName" />
+    <bean id="timeConstrainedProcessTrackerRepository" class="com.saasovation.common.port.adapter.persistence.hibernate.HibernateTimeConstrainedProcessTrackerRepository">
+        <property name="sessionProvider" ref="sessionProvider"/>
+    </bean>
 </beans>

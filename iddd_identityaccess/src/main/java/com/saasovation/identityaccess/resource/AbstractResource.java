@@ -17,8 +17,8 @@ package com.saasovation.identityaccess.resource;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 
-import javax.ws.rs.core.CacheControl;
-import javax.ws.rs.core.EntityTag;
+import jakarta.ws.rs.core.CacheControl;
+import jakarta.ws.rs.core.EntityTag;
 
 import com.saasovation.identityaccess.application.AccessApplicationService;
 import com.saasovation.identityaccess.application.ApplicationServiceRegistry;

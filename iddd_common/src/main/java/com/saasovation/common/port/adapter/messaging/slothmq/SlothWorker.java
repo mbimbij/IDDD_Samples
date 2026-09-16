@@ -18,14 +18,13 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
-import java.nio.channels.Channels;
-import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 
 public abstract class SlothWorker {
 
-	private static final int HUB_PORT = 55555;
+	private static final int DEFAULT_HUB_PORT = 55555;
+	private static volatile int hubPort = DEFAULT_HUB_PORT;
 
 	private int port;
 	private ServerSocketChannel socket;
@@ -64,14 +63,30 @@ public abstract class SlothWorker {
                 return null; // if non-blocking
             }
 
-            ReadableByteChannel readByteChannel =
-                    Channels.newChannel(socketChannel.socket().getInputStream());
+            socketChannel.configureBlocking(false);
 
             ByteArrayOutputStream byteArray = new ByteArrayOutputStream();
 
-            ByteBuffer readBuffer = ByteBuffer.allocate(8);
+            ByteBuffer readBuffer = ByteBuffer.allocate(1024);
+            int idleReads = 0;
 
-            while (readByteChannel.read(readBuffer) != -1) {
+            while (idleReads < 10) {
+                int bytesRead = socketChannel.read(readBuffer);
+
+                if (bytesRead == -1) {
+                    break;
+                }
+
+                if (bytesRead == 0) {
+                    if (byteArray.size() > 0) {
+                        ++idleReads;
+                    }
+
+                    this.sleepFor(10L);
+                    continue;
+                }
+
+                idleReads = 0;
                 readBuffer.flip();
 
                 while (readBuffer.hasRemaining()) {
@@ -79,6 +94,10 @@ public abstract class SlothWorker {
                 }
 
                 readBuffer.clear();
+            }
+
+            if (byteArray.size() == 0) {
+                return null;
             }
 
             return new String(byteArray.toByteArray());
@@ -108,7 +127,13 @@ public abstract class SlothWorker {
 
             socketChannel.connect(new InetSocketAddress(aPort));
 
-            socketChannel.write(ByteBuffer.wrap(anEncodedMessage.getBytes()));
+            ByteBuffer writeBuffer = ByteBuffer.wrap(anEncodedMessage.getBytes());
+
+            while (writeBuffer.hasRemaining()) {
+                socketChannel.write(writeBuffer);
+            }
+
+            socketChannel.shutdownOutput();
 
             System.out.println(this.getClass().getSimpleName() + ": Sent: " + anEncodedMessage);
 
@@ -127,7 +152,7 @@ public abstract class SlothWorker {
     }
 
     protected void sendToServer(String anEncodedMessage) {
-        this.sendTo(HUB_PORT, anEncodedMessage);
+        this.sendTo(hubPort, anEncodedMessage);
     }
 
     protected void sleepFor(long aMillis) {
@@ -143,26 +168,15 @@ public abstract class SlothWorker {
 	}
 
     private int discoverClientPort() {
-        boolean discovered = false;
-        int discoveryPort = HUB_PORT + 1;
-        final int errorPort = discoveryPort + 20;
+        try {
+            this.socket.socket().setReuseAddress(true);
+            this.socket.bind(new InetSocketAddress(0));
 
-        while (!discovered && discoveryPort < errorPort) {
-            try {
-                this.socket.bind(new InetSocketAddress(discoveryPort));
+            return this.socket.socket().getLocalPort();
 
-                discovered = true;
-
-            } catch (Exception e) {
-                ++discoveryPort;
-            }
+        } catch (Exception e) {
+            throw new IllegalStateException("No client ports available.", e);
         }
-
-        if (!discovered) {
-            throw new IllegalStateException("No ports available.");
-        }
-
-        return discoveryPort;
     }
 
 	private void open() {
@@ -181,6 +195,7 @@ public abstract class SlothWorker {
             System.out.println("SLOTH CLIENT: Opened on port: " + this.port);
 
         } catch (Exception e) {
+            this.socket = null;
             System.out.println("SLOTH CLIENT: Cannot connect because: " + e.getMessage());
         }
     }
@@ -188,13 +203,25 @@ public abstract class SlothWorker {
     private void openHub() {
         try {
             this.socket = ServerSocketChannel.open();
-            this.socket.bind(new InetSocketAddress(HUB_PORT));
+            this.socket.socket().setReuseAddress(true);
+            this.bindHubSocket();
             this.socket.configureBlocking(true);
-            this.port = HUB_PORT;
+            this.port = hubPort;
             System.out.println("SLOTH SERVER: Opened on port: " + this.port);
 
         } catch (Exception e) {
+            this.socket = null;
             System.out.println("SLOTH SERVER: Cannot connect because: " + e.getMessage());
         }
+    }
+
+    private void bindHubSocket() throws IOException {
+        try {
+            this.socket.bind(new InetSocketAddress(DEFAULT_HUB_PORT));
+        } catch (IOException e) {
+            this.socket.bind(new InetSocketAddress(0));
+        }
+
+        hubPort = this.socket.socket().getLocalPort();
     }
 }

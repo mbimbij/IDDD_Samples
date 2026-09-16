@@ -16,7 +16,7 @@ package com.saasovation.identityaccess.infrastructure.persistence;
 
 import java.util.Collection;
 
-import org.hibernate.Query;
+import org.hibernate.query.Query;
 import org.hibernate.exception.ConstraintViolationException;
 
 import com.saasovation.common.port.adapter.persistence.hibernate.AbstractHibernateSession;
@@ -35,7 +35,7 @@ public class HibernateGroupRepository
     @Override
     public void add(Group aGroup) {
         try {
-            this.session().saveOrUpdate(aGroup);
+            this.session().persist(aGroup);
         } catch (ConstraintViolationException e) {
             throw new IllegalStateException("Group is not unique.", e);
         }
@@ -46,10 +46,10 @@ public class HibernateGroupRepository
     public Collection<Group> allGroups(TenantId aTenantId) {
         Query query = this.session().createQuery(
                 "from com.saasovation.identityaccess.domain.model.identity.Group as _obj_ "
-                + "where _obj_.tenantId = ? "
+                + "where _obj_.tenantId = ?1 "
                   + "and _obj_.name not like '" + Group.ROLE_GROUP_PREFIX + "%'");
 
-        query.setParameter(0, aTenantId);
+        query.setParameter(1, aTenantId);
 
         return (Collection<Group>) query.list();
     }
@@ -62,17 +62,17 @@ public class HibernateGroupRepository
 
         Query query = this.session().createQuery(
                 "from com.saasovation.identityaccess.domain.model.identity.Group as _obj_ "
-                + "where _obj_.tenantId = ? "
-                  + "and _obj_.name = ?");
+                + "where _obj_.tenantId = ?1 "
+                  + "and _obj_.name = ?2");
 
-        query.setParameter(0, aTenantId);
-        query.setParameter(1, aName, org.hibernate.Hibernate.STRING);
+        query.setParameter(1, aTenantId);
+        query.setParameter(2, aName);
 
         return (Group) query.uniqueResult();
     }
 
     @Override
     public void remove(Group aGroup) {
-        this.session().delete(aGroup);
+        this.session().remove(aGroup);
     }
 }

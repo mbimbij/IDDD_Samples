@@ -16,8 +16,7 @@ package com.saasovation.identityaccess.infrastructure.persistence;
 
 import java.util.UUID;
 
-import org.hibernate.Hibernate;
-import org.hibernate.Query;
+import org.hibernate.query.Query;
 import org.hibernate.exception.ConstraintViolationException;
 
 import com.saasovation.common.port.adapter.persistence.hibernate.AbstractHibernateSession;
@@ -36,7 +35,7 @@ public class HibernateTenantRepository
     @Override
     public void add(Tenant aTenant) {
         try {
-            this.session().saveOrUpdate(aTenant);
+            this.session().persist(aTenant);
         } catch (ConstraintViolationException e) {
             throw new IllegalStateException("Tenant is not unique.", e);
         }
@@ -49,16 +48,16 @@ public class HibernateTenantRepository
 
     @Override
     public void remove(Tenant aTenant) {
-        this.session().delete(aTenant);
+        this.session().remove(aTenant);
     }
 
     @Override
     public Tenant tenantNamed(String aName) {
         Query query = this.session().createQuery(
                 "from com.saasovation.identityaccess.domain.model.identity.Tenant as _obj_ "
-                + "where _obj_.name = ?");
+                + "where _obj_.name = ?1");
 
-        query.setParameter(0, aName, Hibernate.STRING);
+        query.setParameter(1, aName);
 
         return (Tenant) query.uniqueResult();
     }
@@ -67,9 +66,9 @@ public class HibernateTenantRepository
     public Tenant tenantOfId(TenantId aTenantId) {
         Query query = this.session().createQuery(
                 "from com.saasovation.identityaccess.domain.model.identity.Tenant as _obj_ "
-                + "where _obj_.tenantId = ?");
+                + "where _obj_.tenantId = ?1");
 
-        query.setParameter(0, aTenantId);
+        query.setParameter(1, aTenantId);
 
         return (Tenant) query.uniqueResult();
     }

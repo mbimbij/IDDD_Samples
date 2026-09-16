@@ -1,0 +1,41 @@
+# Infrastructure for the IDDD sample tests: MySQL (read models, Hibernate) and RabbitMQ (notifications).
+# Start with `docker compose up -d --wait` (or `make up`); the tests expect both on localhost with default credentials.
+#
+# MySQL init scripts run ONLY on an empty data directory (first start of a fresh container).
+# Since no volume is declared, `docker compose down` + `up` always gives a clean, fully-initialised database.
+services:
+  mysql:
+    image: mysql:9
+    container_name: iddd-mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+    volumes:
+      # Executed in lexical order. test_common.sql creates iddd_common_test; common.sql adds the shared tables to it.
+      - ./iddd_common/src/main/mysql/test_common.sql:/docker-entrypoint-initdb.d/01-test_common.sql:ro
+      - ./iddd_common/src/main/mysql/common.sql:/docker-entrypoint-initdb.d/02-common.sql:ro
+      - ./iddd_identityaccess/src/main/mysql/iam.sql:/docker-entrypoint-initdb.d/03-iam.sql:ro
+      - ./iddd_collaboration/src/main/mysql/collaboration.sql:/docker-entrypoint-initdb.d/04-collaboration.sql:ro
+    healthcheck:
+      # The entrypoint runs the init scripts against a temporary --skip-networking server, so a TCP ping
+      # only succeeds once the real server is listening, i.e. after all four scripts have been applied.
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-proot", "--silent"]
+      interval: 3s
+      timeout: 5s
+      retries: 40
+      start_period: 10s
+
+  rabbitmq:
+    image: rabbitmq:4-management
+    container_name: iddd-rabbitmq
+    ports:
+      - "5672:5672"   # AMQP — the code connects with the broker defaults (guest/guest, vhost "/")
+      - "15672:15672" # management UI — http://localhost:15672 (guest/guest)
+    healthcheck:
+      # check_port_connectivity fails until every listener (incl. AMQP 5672) accepts connections; ping does not.
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "check_port_connectivity"]
+      interval: 3s
+      timeout: 10s
+      retries: 40
+      start_period: 10s

@@ -39,8 +39,6 @@ public class ApplicationServiceRegistry implements ApplicationContextAware  {
             ApplicationContext anApplicationContext)
     throws BeansException {
 
-        if (ApplicationServiceRegistry.applicationContext == null) {
-            ApplicationServiceRegistry.applicationContext = anApplicationContext;
-        }
+        ApplicationServiceRegistry.applicationContext = anApplicationContext;
     }
 }

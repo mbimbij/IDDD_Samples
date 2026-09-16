@@ -16,8 +16,7 @@ package com.saasovation.identityaccess.resource;
 
 import java.util.UUID;
 
-import org.jboss.resteasy.client.ClientRequest;
-import org.jboss.resteasy.client.ClientResponse;
+import jakarta.ws.rs.core.Response;
 
 import com.saasovation.common.media.RepresentationReader;
 import com.saasovation.identityaccess.domain.model.DomainRegistry;
@@ -37,12 +36,15 @@ public class UserResourceTest extends ResourceTestCase {
         String url = "http://localhost:" + PORT + "/tenants/{tenantId}/users/{username}/autenticatedWith/{password}";
 
         System.out.println(">>> GET: " + url);
-        ClientRequest request = new ClientRequest(url);
-        request.pathParameter("tenantId", user.tenantId().id());
-        request.pathParameter("username", user.username());
-        request.pathParameter("password", FIXTURE_PASSWORD);
-
-        String output = request.getTarget(String.class);
+        String output;
+        try (Response response =
+                     this.get(
+                             url,
+                             "tenantId", user.tenantId().id(),
+                             "username", user.username(),
+                             "password", FIXTURE_PASSWORD)) {
+            output = response.readEntity(String.class);
+        }
         System.out.println(output);
 
         RepresentationReader reader = new RepresentationReader(output);
@@ -59,12 +61,14 @@ public class UserResourceTest extends ResourceTestCase {
         String url = "http://localhost:" + PORT + "/tenants/{tenantId}/users/{username}/autenticatedWith/{password}";
 
         System.out.println(">>> GET: " + url);
-        ClientRequest request = new ClientRequest(url);
-        request.pathParameter("tenantId", user.tenantId().id());
-        request.pathParameter("username", user.username());
-        request.pathParameter("password", UUID.randomUUID().toString());
-        ClientResponse<String> response = request.get(String.class);
-        assertTrue(response.getStatus() == 404 || response.getStatus() == 500);
+        try (Response response =
+                     this.get(
+                             url,
+                             "tenantId", user.tenantId().id(),
+                             "username", user.username(),
+                             "password", UUID.randomUUID().toString())) {
+            assertTrue(response.getStatus() == 404 || response.getStatus() == 500);
+        }
     }
 
     public void testGetUser() throws Exception {
@@ -74,12 +78,15 @@ public class UserResourceTest extends ResourceTestCase {
         String url = "http://localhost:" + PORT + "/tenants/{tenantId}/users/{username}";
 
         System.out.println(">>> GET: " + url);
-        ClientRequest request = new ClientRequest(url);
-        request.pathParameter("tenantId", user.tenantId().id());
-        request.pathParameter("username", user.username());
-        ClientResponse<String> response = request.get(String.class);
-        assertEquals(200, response.getStatus());
-        String entity = response.getEntity();
+        String entity;
+        try (Response response =
+                     this.get(
+                             url,
+                             "tenantId", user.tenantId().id(),
+                             "username", user.username())) {
+            assertEquals(200, response.getStatus());
+            entity = response.readEntity(String.class);
+        }
         System.out.println(entity);
         RepresentationReader reader = new RepresentationReader(entity);
         assertEquals(user.username(), reader.stringValue("username"));
@@ -93,11 +100,13 @@ public class UserResourceTest extends ResourceTestCase {
         String url = "http://localhost:" + PORT + "/tenants/{tenantId}/users/{username}";
 
         System.out.println(">>> GET: " + url);
-        ClientRequest request = new ClientRequest(url);
-        request.pathParameter("tenantId", user.tenantId().id());
-        request.pathParameter("username", user.username() + "!");
-        ClientResponse<String> response = request.get(String.class);
-        assertTrue(response.getStatus() == 404 || response.getStatus() == 500);
+        try (Response response =
+                     this.get(
+                             url,
+                             "tenantId", user.tenantId().id(),
+                             "username", user.username() + "!")) {
+            assertTrue(response.getStatus() == 404 || response.getStatus() == 500);
+        }
     }
 
     public void testIsUserInRole() throws Exception {
@@ -111,13 +120,16 @@ public class UserResourceTest extends ResourceTestCase {
         String url = "http://localhost:" + PORT + "/tenants/{tenantId}/users/{username}/inRole/{role}";
 
         System.out.println(">>> GET: " + url);
-        ClientRequest request = new ClientRequest(url);
-        request.pathParameter("tenantId", user.tenantId().id());
-        request.pathParameter("username", user.username());
-        request.pathParameter("role", role.name());
-        ClientResponse<String> response = request.get(String.class);
-        assertEquals(200, response.getStatus());
-        String entity = response.getEntity();
+        String entity;
+        try (Response response =
+                     this.get(
+                             url,
+                             "tenantId", user.tenantId().id(),
+                             "username", user.username(),
+                             "role", role.name())) {
+            assertEquals(200, response.getStatus());
+            entity = response.readEntity(String.class);
+        }
         System.out.println(entity);
         RepresentationReader reader = new RepresentationReader(entity);
         assertEquals(user.username(),  reader.stringValue("username"));
@@ -134,11 +146,13 @@ public class UserResourceTest extends ResourceTestCase {
         String url = "http://localhost:" + PORT + "/tenants/{tenantId}/users/{username}/inRole/{role}";
 
         System.out.println(">>> GET: " + url);
-        ClientRequest request = new ClientRequest(url);
-        request.pathParameter("tenantId", user.tenantId().id());
-        request.pathParameter("username", user.username());
-        request.pathParameter("role", role.name());
-        ClientResponse<String> response = request.get(String.class);
-        assertEquals(204, response.getStatus());
+        try (Response response =
+                     this.get(
+                             url,
+                             "tenantId", user.tenantId().id(),
+                             "username", user.username(),
+                             "role", role.name())) {
+            assertEquals(204, response.getStatus());
+        }
     }
 }

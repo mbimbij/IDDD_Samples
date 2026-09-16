@@ -78,8 +78,6 @@ public class DomainRegistry implements ApplicationContextAware {
             ApplicationContext anApplicationContext)
     throws BeansException {
 
-        if (DomainRegistry.applicationContext == null) {
-            DomainRegistry.applicationContext = anApplicationContext;
-        }
+        DomainRegistry.applicationContext = anApplicationContext;
     }
 }

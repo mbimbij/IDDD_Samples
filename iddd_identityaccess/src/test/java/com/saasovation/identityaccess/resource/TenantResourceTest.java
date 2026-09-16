@@ -14,7 +14,7 @@
 
 package com.saasovation.identityaccess.resource;
 
-import org.jboss.resteasy.client.ClientRequest;
+import jakarta.ws.rs.core.Response;
 
 import com.saasovation.common.media.RepresentationReader;
 import com.saasovation.identityaccess.domain.model.identity.Tenant;
@@ -31,9 +31,11 @@ public class TenantResourceTest extends ResourceTestCase {
         String url = "http://localhost:" + PORT + "/tenants/{tenantId}";
 
         System.out.println(">>> GET: " + url);
-        ClientRequest request = new ClientRequest(url);
-        request.pathParameter("tenantId", tenant.tenantId().id());
-        String output = request.getTarget(String.class);
+        String output;
+        try (Response response =
+                     this.get(url, "tenantId", tenant.tenantId().id())) {
+            output = response.readEntity(String.class);
+        }
         System.out.println(output);
 
         RepresentationReader reader = new RepresentationReader(output);

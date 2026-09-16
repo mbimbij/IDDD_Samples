@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" "https://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
 
 <hibernate-mapping default-access="field" default-cascade="all">
     <class name="com.saasovation.identityaccess.domain.model.identity.Tenant" table="tbl_tenant" lazy="true">
@@ -10,7 +10,7 @@
         <property name="active" column="active" type="boolean" />
         <property name="description" column="description" type="java.lang.String" />
         <property name="name" column="name" type="java.lang.String" />
-        <set name="registrationInvitations" cascade="all,delete-orphan" inverse="false" lazy="true">
+        <set name="registrationInvitations" cascade="all,delete-orphan" lazy="true">
             <key column="tenant_id" not-null="true" />
             <one-to-many class="com.saasovation.identityaccess.domain.model.identity.RegistrationInvitation" />
         </set>
